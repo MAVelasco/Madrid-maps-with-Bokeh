@@ -18,6 +18,10 @@ __pycache__/
 *.shx
 *.dbf
 *.prj
+*.sbn
+*.sbx
+*.xml
+*.html
 
 # C extensions
 *.so
