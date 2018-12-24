@@ -14,6 +14,10 @@ __pycache__/
 *.xlsx
 *.zip
 *.pdf
+*.shp
+*.shx
+*.dbf
+*.prj
 
 # C extensions
 *.so
