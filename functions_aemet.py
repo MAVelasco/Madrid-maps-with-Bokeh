@@ -116,10 +116,10 @@ def consulta_diaria_aemet(apikey, localidad, query_semana, API):
         json_aemet = json_url[2:L-1].decode('ANSI')
         #print(json_aemet)
         message = json.loads(json_aemet)
-    
+        fecha_consulta = message['elaborado']   
         precipitacion = message['prediccion']
         dia = json_normalize(precipitacion['dia'])
-        out = dia[query_semana]
+        prediccion = dia[query_semana]
         #print(out)
                     
-    return out
+    return prediccion, fecha_consulta
