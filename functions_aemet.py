@@ -11,7 +11,7 @@ def consulta_horaria_aemet(apikey, localidad, API):
     # consulta AEMET
     conn = http.client.HTTPSConnection("opendata.aemet.es")
     headers = {'cache-control': "no-cache"}
-    request = "https://opendata.aemet.es/opendata/api/" + API + "/" + periodo + "/" + localidad + "/" + "?api_key=" + apikey
+    request = "https://opendata.aemet.es/opendata/api/" + API + "/" + periodo + "/" + localidad + "/?api_key=" + apikey
     conn.request("GET", request, headers=headers)
     res = conn.getresponse()
     aux = res.read()
@@ -95,7 +95,7 @@ def consulta_diaria_aemet(apikey, localidad, query_semana, API):
     # consulta AEMET
     conn = http.client.HTTPSConnection("opendata.aemet.es")
     headers = {'cache-control': "no-cache"}
-    request = "https://opendata.aemet.es/opendata/api/" + API + "/" + periodo + "/" + localidad + "/" + "?api_key=" + apikey
+    request = "https://opendata.aemet.es/opendata/api/" + API + "/" + periodo + "/" + localidad + "/?api_key=" + apikey
     conn.request("GET", request, headers=headers)
     res = conn.getresponse()
     aux = res.read()
@@ -123,3 +123,81 @@ def consulta_diaria_aemet(apikey, localidad, query_semana, API):
         #print(out)
                     
     return prediccion, fecha_consulta
+
+
+def consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin):
+    import http.client
+    import urllib.request, json 
+    from pandas.io.json import json_normalize
+    import pandas as pd
+    import numpy as np    
+    import ast
+
+
+    # consulta AEMET
+    conn = http.client.HTTPSConnection("opendata.aemet.es")
+    headers = {'cache-control': "no-cache"}
+    request = "https://opendata.aemet.es/opendata/api/" + API + "/fechaini/" + fechaini + "/fechafin/" + fechafin + "/estacion/" + estacion + "/?api_key=" + apikey
+    conn.request("GET", request, headers=headers)
+    res = conn.getresponse()
+    aux = res.read()
+
+    data = aux.decode("utf-8")
+    #print(data)
+    
+    json_data = json.loads(data)
+    URL_datos = json_data['datos']
+    URL_metadatos = json_data['metadatos']
+
+    # Decodifica el JSON
+    if (json_data['estado']==200):
+        #print(URL_datos)
+        data = urllib.request.urlopen(URL_datos)#.read()
+        json_url = data.read()
+        L = len(json_url)
+        json_aemet = json_url[2:L-1].decode('ANSI')
+        #print(json_aemet)
+        array_dict_aemet = ast.literal_eval(json_aemet)
+        #empty dataframe
+        aemet_columns = ['fecha', 'indicativo', 'nombre', 'provincia', 'altitud', 'tmed', 'prec', 'tmin', 'horatmin', 'tmax', 'horatmax', 'dir', 'velmedia', 'racha', 'horaracha']
+        #df = pd.DataFrame(columns=aemet_columns)
+        L = len(array_dict_aemet)
+        '''df = pd.DataFrame.from_dict(array_dict_aemet[0], orient='index').transpose()
+        for i in range(2,L):
+            df_aux = pd.DataFrame.from_dict(array_dict_aemet[i], orient='index').transpose()
+            df_1 = pd.DataFrame.from_dict(array_dict_aemet[i-1], orient='index').transpose()
+            df_aux.rename(index={0:str(i)}, inplace=True)
+            print(df_aux)
+            df_aux.append(df_aux, ignore_index = True)    
+            print(df)'''
+        temp_df = pd.DataFrame() #Temporary empty dataframe
+        for i in range(0,L):
+            New_df = pd.DataFrame.from_dict(array_dict_aemet[i], orient='index').transpose() #Creates a new dataframe and contains tokenized words of input sentences
+            temp_df = temp_df.append(New_df, ignore_index=True)
+                   
+    return temp_df
+
+def consulta_historico_todas_aemet(apikey, API, fechaini, fechafin):
+    import http.client
+    import urllib.request, json 
+    from pandas.io.json import json_normalize
+    import pandas as pd
+    import numpy as np    
+
+    # consulta AEMET
+    conn = http.client.HTTPSConnection("opendata.aemet.es")
+    headers = {'cache-control': "no-cache"}
+    request = "https://opendata.aemet.es/opendata/api/" + API + "/fechaini/" + fechaini + "/fechafin/" + fechafin + "/todasestaciones/?api_key=" + apikey
+    #print(request)
+    conn.request("GET", request, headers=headers)
+    res = conn.getresponse()
+    aux = res.read()
+
+    data = aux.decode("utf-8")
+    #print(data)
+           
+                    
+    return data
+
+
+
