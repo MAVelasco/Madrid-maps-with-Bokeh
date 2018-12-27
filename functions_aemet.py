@@ -1,3 +1,6 @@
+''' consulta_horaria_aemet(apikey, localidad, API)
+Realiza una consulta de la predicción climatológica en una localidad determinada para el día de la consulta en el periodo 07-23h
+'''
 def consulta_horaria_aemet(apikey, localidad, API):
     import http.client
     import urllib.request, json 
@@ -82,6 +85,9 @@ def consulta_horaria_aemet(apikey, localidad, API):
             
     return resumen_hoy_1h, resumen_hoy_6h
 
+''' consulta_diaria_aemet(apikey, localidad, query_semana, API)
+Realiza una consulta de la predicción climatológica en una localidad determinada las próximas 72 horas
+'''
 def consulta_diaria_aemet(apikey, localidad, query_semana, API):
     import http.client
     import urllib.request, json 
@@ -125,6 +131,9 @@ def consulta_diaria_aemet(apikey, localidad, query_semana, API):
     return prediccion, fecha_consulta
 
 
+''' consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)
+Realiza una consulta de condiciones climatológicas para un periodo determinado (máximo un mes) y en una estación determinada
+'''
 def consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin):
     import http.client
     import urllib.request, json 
@@ -142,41 +151,44 @@ def consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)
     res = conn.getresponse()
     aux = res.read()
 
-    data = aux.decode("utf-8")
+    try:
+        data = aux.decode("utf-8")
+    except:
+        data = aux.decode("ANSI")
+        
+    #data = aux.decode("utf-8")
     #print(data)
-    
-    json_data = json.loads(data)
-    URL_datos = json_data['datos']
-    URL_metadatos = json_data['metadatos']
 
-    # Decodifica el JSON
-    if (json_data['estado']==200):
-        #print(URL_datos)
-        data = urllib.request.urlopen(URL_datos)#.read()
-        json_url = data.read()
-        L = len(json_url)
-        json_aemet = json_url[2:L-1].decode('ANSI')
-        #print(json_aemet)
-        array_dict_aemet = ast.literal_eval(json_aemet)
-        #empty dataframe
-        aemet_columns = ['fecha', 'indicativo', 'nombre', 'provincia', 'altitud', 'tmed', 'prec', 'tmin', 'horatmin', 'tmax', 'horatmax', 'dir', 'velmedia', 'racha', 'horaracha']
-        #df = pd.DataFrame(columns=aemet_columns)
-        L = len(array_dict_aemet)
-        '''df = pd.DataFrame.from_dict(array_dict_aemet[0], orient='index').transpose()
-        for i in range(2,L):
-            df_aux = pd.DataFrame.from_dict(array_dict_aemet[i], orient='index').transpose()
-            df_1 = pd.DataFrame.from_dict(array_dict_aemet[i-1], orient='index').transpose()
-            df_aux.rename(index={0:str(i)}, inplace=True)
-            print(df_aux)
-            df_aux.append(df_aux, ignore_index = True)    
-            print(df)'''
-        temp_df = pd.DataFrame() #Temporary empty dataframe
-        for i in range(0,L):
-            New_df = pd.DataFrame.from_dict(array_dict_aemet[i], orient='index').transpose() #Creates a new dataframe and contains tokenized words of input sentences
-            temp_df = temp_df.append(New_df, ignore_index=True)
+    json_data = json.loads(data)
+    
+    try:
+        URL_datos = json_data['datos']
+        URL_metadatos = json_data['metadatos']
+
+        # Decodifica el JSON
+        if (json_data['estado']==200):
+            #print(URL_datos)
+            data = urllib.request.urlopen(URL_datos)#.read()
+            json_url = data.read()
+            L = len(json_url)
+            json_aemet = json_url[2:L-1].decode('ANSI')
+            array_dict_aemet = ast.literal_eval(json_aemet)
+       
+            #empty dataframe        
+            L = len(array_dict_aemet)
+            temp_df = pd.DataFrame() #Temporary empty dataframe
+            for i in range(0,L):
+                New_df = pd.DataFrame.from_dict(array_dict_aemet[i], orient='index').transpose() 
+                temp_df = temp_df.append(New_df, ignore_index=True)
+           
+    except:
+        temp_df = pd.DataFrame()
                    
     return temp_df
 
+''' consulta_historico_todas_aemet(apikey, API, fechaini, fechafin)
+Realiza una consulta de condiciones climatológicas para un periodo determinado (máximo un mes) en todas las estaciones inventariadas
+'''
 def consulta_historico_todas_aemet(apikey, API, fechaini, fechafin):
     import http.client
     import urllib.request, json 
@@ -195,9 +207,37 @@ def consulta_historico_todas_aemet(apikey, API, fechaini, fechafin):
 
     data = aux.decode("utf-8")
     #print(data)
-           
-                    
+                           
     return data
+
+''' ##### consulta_historico_meses_estacion_aemet(apikey,API,  estacion, anno) #################################################################
+Realiza una consulta de condiciones climatológicas para un periodo determinado (un año) en una estación determinada
+'''
+def consulta_historico_anno_estacion_aemet(apikey, API,  estacion, anno):
+    
+    #formato de la fecha: "2018-10-01T01%3A01%3A01UTC"
+    resto_fecha = "01T01%3A01%3A01UTC"
+    meses = ['01','02','03','04','05','06','07','08','09','10','11','12']
+    
+    # primer mes
+    fechaini = anno + "-" + meses[0] + "-" + resto_fecha
+    fechafin = anno + "-" + meses[1] + "-" + resto_fecha
+    df_mes = consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)
+    
+    # iteraciones
+    for i in range(1,len(meses)-2):
+        fechaini = anno + "-" + meses[i] + "-" + resto_fecha
+        fechafin = anno + "-" + meses[i+1] + "-" + resto_fecha
+        df_new = consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)
+        df_mes = df_mes.append(df_new, ignore_index=True)
+
+    #ultimo mes
+    fechaini = anno + "-12-" + resto_fecha
+    fechafin = str(int(anno)+1) + "-01-" + resto_fecha
+    df_new = consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)
+    df_mes = df_mes.append(df_new, ignore_index=True)
+
+    return df_mes
 
 
 
