@@ -19,7 +19,10 @@ def consulta_horaria_aemet(apikey, localidad, API):
     res = conn.getresponse()
     aux = res.read()
 
-    data = aux.decode("ANSI")
+    try:
+        data = aux.decode("ANSI")
+    except:
+        data = aux.decode("utf-8")
     #print(data)
 
     json_data = json.loads(data)
@@ -106,7 +109,10 @@ def consulta_diaria_aemet(apikey, localidad, query_semana, API):
     res = conn.getresponse()
     aux = res.read()
 
-    data = aux.decode("utf-8")
+    try:
+        data = aux.decode("ANSI")
+    except:
+        data = aux.decode("utf-8")
     #print(data)
 
     json_data = json.loads(data)
@@ -205,7 +211,10 @@ def consulta_historico_todas_aemet(apikey, API, fechaini, fechafin):
     res = conn.getresponse()
     aux = res.read()
 
-    data = aux.decode("utf-8")
+    try:
+        data = aux.decode("ANSI")
+    except:
+        data = aux.decode("utf-8")
     #print(data)
                            
     return data
