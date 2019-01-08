@@ -241,6 +241,10 @@ def consulta_historico_anno_estacion_aemet(apikey, API,  estacion, anno):
         df_mes = df_mes.append(df_new, ignore_index=True)
 
     #ultimo mes
+    fechaini = anno + "-11-" + resto_fecha
+    fechafin = anno + "-12-" + resto_fecha
+    df_new = consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)
+    df_mes = df_mes.append(df_new, ignore_index=True)
     fechaini = anno + "-12-" + resto_fecha
     fechafin = str(int(anno)+1) + "-01-" + resto_fecha
     df_new = consulta_historico_estacion_aemet(apikey, estacion, API, fechaini, fechafin)

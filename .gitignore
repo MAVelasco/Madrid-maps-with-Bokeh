@@ -24,6 +24,10 @@ __pycache__/
 *.html
 *.dcat
 
+#notebooks
+*.lock
+*.dirlock
+
 # C extensions
 *.so
 
